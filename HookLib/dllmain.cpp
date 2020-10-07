@@ -2,17 +2,15 @@
 #include "ProcessProtector.h"
 
 #pragma data_seg("SharedData")
-DWORD dwProtectedProcessId = 0;
+struct { DWORD dwHookCallerProcessID; } sharedData{};
 #pragma data_seg()
 #pragma comment(linker, "/SECTION:SharedData,RWS")
-
-struct SharedData { DWORD dwHookCallerProcessID; };
 
 HINSTANCE hInstance;
 HHOOK hHook;
 
 BOOL WINAPI SetGlobalWindowsHook() {
-	dwProtectedProcessId = GetCurrentProcessId();
+	sharedData.dwHookCallerProcessID = GetCurrentProcessId();
 	return (hHook = SetWindowsHookExW(WH_GETMESSAGE, [](int nCode, WPARAM wParam, LPARAM lParam) { return CallNextHookEx(NULL, nCode, wParam, lParam); }, hInstance, 0)) != NULL;
 }
 
@@ -28,12 +26,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpvReserved) {
 	switch (dwReason) {
 	case DLL_PROCESS_ATTACH: {
 		hInstance = hModule;
-		ProcessProtector::Hide(dwProtectedProcessId);
-		ProcessProtector::Protect(dwProtectedProcessId);
+		ProcessProtector::Hide(sharedData.dwHookCallerProcessID);
+		ProcessProtector::Protect(sharedData.dwHookCallerProcessID);
 	}	break;
 	case DLL_PROCESS_DETACH: {
-		ProcessProtector::Unprotect(dwProtectedProcessId);
-		ProcessProtector::Unhide(dwProtectedProcessId);
+		ProcessProtector::Unprotect(sharedData.dwHookCallerProcessID);
+		ProcessProtector::Unhide(sharedData.dwHookCallerProcessID);
 	}	break;
 	}
 	return TRUE;

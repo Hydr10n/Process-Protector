@@ -2,7 +2,6 @@
  * ATTENTION: The test must be running as administrator. Besides, Visual Studio [Solution Platforms] must be set correctly before building (for example, if the test is going to be running on Windows x64 platform, change [Solution Platforms] to "x64" so that the test program can inject its DLL into 64-bit Task Manager).
 */
 
-#include <Windows.h>
 #include <iostream>
 #include <conio.h>
 #include "../HookLib/HookLib.h"

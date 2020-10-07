@@ -1,12 +1,13 @@
+/*
+ * Header Files: HookLib.h
+ * Last Update: 2020/10/07
+ *
+ * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
+ */
+
 #pragma once
 
 #include <Windows.h>
 
-#ifdef __cplusplus
-#define EXTERN extern "C"
-#else
-#define EXTERN extern
-#endif
-
-EXTERN BOOL WINAPI SetGlobalWindowsHook();
-EXTERN BOOL WINAPI UnhookGlobalWindowsHook();
+BOOL WINAPI SetGlobalWindowsHook();
+BOOL WINAPI UnhookGlobalWindowsHook();
