@@ -1,6 +1,6 @@
 /*
  * Heade File: ProcessProtector.h
- * Last Update: 2020/10/05
+ * Last Update: 2020/10/09
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -62,20 +62,19 @@ namespace Hydr10n {
 			} m_static_constructor;
 
 			static LONG ChangeProcAddr(PVOID* ppPointer, PVOID pDetour, BOOL bRestore) {
-				DetourTransactionBegin();
-				DetourUpdateThread(GetCurrentThread());
-				if (bRestore)
-					DetourDetach(ppPointer, pDetour);
-				else
-					DetourAttach(ppPointer, pDetour);
+				LONG ret = DetourTransactionBegin();
+				if (ret != NO_ERROR
+					|| (ret = DetourUpdateThread(GetCurrentThread())) != NO_ERROR
+					|| (ret = (bRestore ? DetourDetach(ppPointer, pDetour) : DetourAttach(ppPointer, pDetour))) != NO_ERROR)
+					return ret;
 				return DetourTransactionCommit();
 			}
 
 			static HANDLE WINAPI MyOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) { return m_OpenProcess(Contains(m_ProtectedProcessesIds, dwProcessId) ? 0 : dwDesiredAccess, bInheritHandle, dwProcessId); }
 
 			static NTSTATUS NTAPI MyNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength) {
-				const NTSTATUS status = m_NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
-				if (NT_SUCCESS(status) && SystemInformationClass == SYSTEM_INFORMATION_CLASS::SystemProcessInformation)
+				const NTSTATUS ret = m_NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
+				if (NT_SUCCESS(ret) && SystemInformationClass == SYSTEM_INFORMATION_CLASS::SystemProcessInformation)
 					for (PSYSTEM_PROCESS_INFORMATION pCurrent = (PSYSTEM_PROCESS_INFORMATION)SystemInformation, pPrevious = NULL; pCurrent != NULL; pCurrent = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)pCurrent + pCurrent->NextEntryOffset)) {
 						if (!Contains(m_HiddenProcessesIds, (DWORD)pCurrent->UniqueProcessId))
 							pPrevious = pCurrent;
@@ -84,7 +83,7 @@ namespace Hydr10n {
 						if (!pCurrent->NextEntryOffset)
 							break;
 					}
-				return status;
+				return ret;
 			}
 		};
 
