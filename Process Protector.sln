@@ -3,18 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Detours", "Detours\Detours.vcxitems", "{98ADFD4D-5AF1-40C7-B790-D8A1D7F1D498}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessUtils", "ProcessUtils\ProcessUtils.vcxitems", "{5CC106A1-6209-45F1-B5F5-B0E6696218D0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HookLib", "HookLib\HookLib.vcxproj", "{EE16152F-396E-4CEC-8490-4B074C9EFA89}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{F3F4DCD6-2BC3-4700-B2F9-0020E9E18DDA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DetoursHelpers", "DetoursHelpers\DetoursHelpers.vcxitems", "{0491BC94-CB78-42D3-B8CA-3016322B416F}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		DetoursHelpers\DetoursHelpers.vcxitems*{0491bc94-cb78-42d3-b8ca-3016322b416f}*SharedItemsImports = 9
 		ProcessUtils\ProcessUtils.vcxitems*{5cc106a1-6209-45f1-b5f5-b0e6696218d0}*SharedItemsImports = 9
-		Detours\Detours.vcxitems*{98adfd4d-5af1-40c7-b790-d8a1d7f1d498}*SharedItemsImports = 9
 		ProcessUtils\ProcessUtils.vcxitems*{ee16152f-396e-4cec-8490-4b074c9efa89}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

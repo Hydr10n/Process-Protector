@@ -1,6 +1,6 @@
 /*
  * Heade File: ProcessProtector.h
- * Last Update: 2020/10/09
+ * Last Update: 2020/10/13
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -8,17 +8,11 @@
 #pragma once
 
 #include <Windows.h>
-#include <Winternl.h>
+#include <winternl.h>
 #include <set>
-#include "../Detours/include/detours.h"
+#include "../DetoursHelpers/DetoursHelpers.h"
 
 #pragma comment(lib, "ntdll")
-
-#ifdef _M_IX86
-#pragma comment(lib, "../Detours/lib.X86/detours")
-#elif defined _M_X64
-#pragma comment(lib, "../Detours/lib.X64/detours")
-#endif
 
 #pragma warning(disable:4302)
 #pragma warning(disable:4311)
@@ -27,56 +21,57 @@ namespace Hydr10n {
 	namespace ProcessUtils {
 		class ProcessProtector final {
 		public:
-			static LONG Hide(DWORD dwProcessId) {
-				m_HiddenProcessesIds.insert(dwProcessId);
-				return ChangeProcAddr((PVOID*)&m_NtQuerySystemInformation, MyNtQuerySystemInformation, FALSE);
-			}
+			static bool Hide(DWORD dwProcessId) { return std_set_helper::modify(m_HiddenProcessIds, dwProcessId, false); }
 
-			static LONG Unhide(DWORD dwProcessId) {
-				m_HiddenProcessesIds.erase(dwProcessId);
-				return ChangeProcAddr((PVOID*)&m_NtQuerySystemInformation, MyNtQuerySystemInformation, TRUE);
-			}
+			static bool Unhide(DWORD dwProcessId) { return std_set_helper::modify(m_HiddenProcessIds, dwProcessId, true); }
 
-			static LONG Protect(DWORD dwProcessId) {
-				m_ProtectedProcessesIds.insert(dwProcessId);
-				return ChangeProcAddr((PVOID*)&m_OpenProcess, MyOpenProcess, FALSE);
-			}
+			static bool Protect(DWORD dwProcessId) { return std_set_helper::modify(m_ProtectedProcessIds, dwProcessId, false); }
 
-			static LONG Unprotect(DWORD dwProcessId) {
-				m_ProtectedProcessesIds.erase(dwProcessId);
-				return ChangeProcAddr((PVOID*)&m_OpenProcess, MyOpenProcess, TRUE);
-			}
+			static bool Unprotect(DWORD dwProcessId) { return std_set_helper::modify(m_ProtectedProcessIds, dwProcessId, true); }
 
 		private:
-			static std::set<DWORD> m_HiddenProcessesIds, m_ProtectedProcessesIds;
-			static decltype(NtQuerySystemInformation)* m_NtQuerySystemInformation;
-			static decltype(OpenProcess)* m_OpenProcess;
+			struct std_set_helper final {
+				template <class T> static bool contains(const std::set<T>& container, const T& item) { return container.find(item) != container.end(); }
 
-			template <class T> static bool Contains(const std::set<T>& _set, const T& item) { return _set.find(item) != _set.end(); }
+				template <class T> static bool modify(std::set<T>& container, const T& item, bool remove) {
+					const bool ret = contains(container, item) == remove;
+					if (ret) {
+						if (remove)
+							container.erase(item);
+						else
+							container.insert(item);
+					}
+					return ret;
+				}
+			};
+
+			static std::set<DWORD> m_HiddenProcessIds, m_ProtectedProcessIds;
+			static decltype(OpenProcess)* m_OpenProcess;
+			static decltype(NtQuerySystemInformation)* m_NtQuerySystemInformation;
 
 			static const struct static_constructor {
 				static_constructor() {
+					using Hydr10n::DetoursHelpers::ChangeProcAddr;
 					m_OpenProcess = OpenProcess;
 					m_NtQuerySystemInformation = NtQuerySystemInformation;
+					ChangeProcAddr((PVOID*)&m_OpenProcess, MyOpenProcess, FALSE);
+					ChangeProcAddr((PVOID*)&m_NtQuerySystemInformation, MyNtQuerySystemInformation, FALSE);
+				}
+
+				~static_constructor() {
+					using Hydr10n::DetoursHelpers::ChangeProcAddr;
+					ChangeProcAddr((PVOID*)&m_OpenProcess, MyOpenProcess, TRUE);
+					ChangeProcAddr((PVOID*)&m_NtQuerySystemInformation, MyNtQuerySystemInformation, TRUE);
 				}
 			} m_static_constructor;
 
-			static LONG ChangeProcAddr(PVOID* ppPointer, PVOID pDetour, BOOL bRestore) {
-				LONG ret = DetourTransactionBegin();
-				if (ret != NO_ERROR
-					|| (ret = DetourUpdateThread(GetCurrentThread())) != NO_ERROR
-					|| (ret = (bRestore ? DetourDetach(ppPointer, pDetour) : DetourAttach(ppPointer, pDetour))) != NO_ERROR)
-					return ret;
-				return DetourTransactionCommit();
-			}
-
-			static HANDLE WINAPI MyOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) { return m_OpenProcess(Contains(m_ProtectedProcessesIds, dwProcessId) ? 0 : dwDesiredAccess, bInheritHandle, dwProcessId); }
+			static HANDLE WINAPI MyOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) { return m_OpenProcess(std_set_helper::contains(m_ProtectedProcessIds, dwProcessId) ? 0 : dwDesiredAccess, bInheritHandle, dwProcessId); }
 
 			static NTSTATUS NTAPI MyNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength) {
 				const NTSTATUS ret = m_NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 				if (NT_SUCCESS(ret) && SystemInformationClass == SYSTEM_INFORMATION_CLASS::SystemProcessInformation)
 					for (PSYSTEM_PROCESS_INFORMATION pCurrent = (PSYSTEM_PROCESS_INFORMATION)SystemInformation, pPrevious = NULL; pCurrent != NULL; pCurrent = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)pCurrent + pCurrent->NextEntryOffset)) {
-						if (!Contains(m_HiddenProcessesIds, (DWORD)pCurrent->UniqueProcessId))
+						if (!std_set_helper::contains(m_HiddenProcessIds, (DWORD)pCurrent->UniqueProcessId))
 							pPrevious = pCurrent;
 						else if (pPrevious != NULL)
 							pPrevious->NextEntryOffset = pCurrent->NextEntryOffset ? pPrevious->NextEntryOffset + pCurrent->NextEntryOffset : 0;
@@ -88,8 +83,8 @@ namespace Hydr10n {
 		};
 
 		decltype(ProcessProtector::m_static_constructor) ProcessProtector::m_static_constructor;
-		decltype(ProcessProtector::m_HiddenProcessesIds) ProcessProtector::m_HiddenProcessesIds;
-		decltype(ProcessProtector::m_ProtectedProcessesIds) ProcessProtector::m_ProtectedProcessesIds;
+		decltype(ProcessProtector::m_HiddenProcessIds) ProcessProtector::m_HiddenProcessIds;
+		decltype(ProcessProtector::m_ProtectedProcessIds) ProcessProtector::m_ProtectedProcessIds;
 		decltype(ProcessProtector::m_OpenProcess) ProcessProtector::m_OpenProcess;
 		decltype(ProcessProtector::m_NtQuerySystemInformation) ProcessProtector::m_NtQuerySystemInformation;
 	}
