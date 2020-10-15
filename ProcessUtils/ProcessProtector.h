@@ -1,50 +1,35 @@
 /*
  * Heade File: ProcessProtector.h
- * Last Update: 2020/10/13
+ * Last Update: 2020/10/15
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
 
 #pragma once
 
-#include <Windows.h>
-#include <winternl.h>
-#include <set>
-#include "../DetoursHelpers/DetoursHelpers.h"
-
-#pragma comment(lib, "ntdll")
-
 #pragma warning(disable:4302)
 #pragma warning(disable:4311)
+
+#include <Windows.h>
+#include <winternl.h>
+#include "../DetoursHelpers/DetoursHelpers.h"
+#include "../std_container_helpers/set_helper.h"
+
+#pragma comment(lib, "ntdll")
 
 namespace Hydr10n {
 	namespace ProcessUtils {
 		class ProcessProtector final {
 		public:
-			static bool Hide(DWORD dwProcessId) { return std_set_helper::modify(m_HiddenProcessIds, dwProcessId, false); }
+			static bool Hide(DWORD dwProcessId) { return std_container_helpers::set_helper::modify(m_HiddenProcessIds, dwProcessId, false); }
 
-			static bool Unhide(DWORD dwProcessId) { return std_set_helper::modify(m_HiddenProcessIds, dwProcessId, true); }
+			static bool Unhide(DWORD dwProcessId) { return std_container_helpers::set_helper::modify(m_HiddenProcessIds, dwProcessId, true); }
 
-			static bool Protect(DWORD dwProcessId) { return std_set_helper::modify(m_ProtectedProcessIds, dwProcessId, false); }
+			static bool Protect(DWORD dwProcessId) { return std_container_helpers::set_helper::modify(m_ProtectedProcessIds, dwProcessId, false); }
 
-			static bool Unprotect(DWORD dwProcessId) { return std_set_helper::modify(m_ProtectedProcessIds, dwProcessId, true); }
+			static bool Unprotect(DWORD dwProcessId) { return std_container_helpers::set_helper::modify(m_ProtectedProcessIds, dwProcessId, true); }
 
 		private:
-			struct std_set_helper final {
-				template <class T> static bool contains(const std::set<T>& container, const T& item) { return container.find(item) != container.end(); }
-
-				template <class T> static bool modify(std::set<T>& container, const T& item, bool remove) {
-					const bool ret = contains(container, item) == remove;
-					if (ret) {
-						if (remove)
-							container.erase(item);
-						else
-							container.insert(item);
-					}
-					return ret;
-				}
-			};
-
 			static std::set<DWORD> m_HiddenProcessIds, m_ProtectedProcessIds;
 			static decltype(OpenProcess)* m_OpenProcess;
 			static decltype(NtQuerySystemInformation)* m_NtQuerySystemInformation;
@@ -65,13 +50,13 @@ namespace Hydr10n {
 				}
 			} m_static_constructor;
 
-			static HANDLE WINAPI MyOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) { return m_OpenProcess(std_set_helper::contains(m_ProtectedProcessIds, dwProcessId) ? 0 : dwDesiredAccess, bInheritHandle, dwProcessId); }
+			static HANDLE WINAPI MyOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) { return m_OpenProcess(std_container_helpers::set_helper::contains(m_ProtectedProcessIds, dwProcessId) ? 0 : dwDesiredAccess, bInheritHandle, dwProcessId); }
 
 			static NTSTATUS NTAPI MyNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength) {
 				const NTSTATUS ret = m_NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 				if (NT_SUCCESS(ret) && SystemInformationClass == SYSTEM_INFORMATION_CLASS::SystemProcessInformation)
 					for (PSYSTEM_PROCESS_INFORMATION pCurrent = (PSYSTEM_PROCESS_INFORMATION)SystemInformation, pPrevious = NULL; pCurrent != NULL; pCurrent = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)pCurrent + pCurrent->NextEntryOffset)) {
-						if (!std_set_helper::contains(m_HiddenProcessIds, (DWORD)pCurrent->UniqueProcessId))
+						if (!std_container_helpers::set_helper::contains(m_HiddenProcessIds, (DWORD)pCurrent->UniqueProcessId))
 							pPrevious = pCurrent;
 						else if (pPrevious != NULL)
 							pPrevious->NextEntryOffset = pCurrent->NextEntryOffset ? pPrevious->NextEntryOffset + pCurrent->NextEntryOffset : 0;

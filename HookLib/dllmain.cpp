@@ -3,14 +3,14 @@
 
 #pragma data_seg("SharedData")
 HHOOK hHook{};
-struct { DWORD dwHookCallerProcessID; } sharedData{};
+struct { DWORD dwHookCallerProcessId; } sharedData{};
 #pragma data_seg()
 #pragma comment(linker, "/SECTION:SharedData,RWS")
 
 HINSTANCE hInstance;
 
 BOOL WINAPI SetGlobalWindowsHook() {
-	sharedData.dwHookCallerProcessID = GetCurrentProcessId();
+	sharedData.dwHookCallerProcessId = GetCurrentProcessId();
 	return hHook == NULL ? (hHook = SetWindowsHookExW(WH_GETMESSAGE, [](int nCode, WPARAM wParam, LPARAM lParam) { return CallNextHookEx(NULL, nCode, wParam, lParam); }, hInstance, 0)) != NULL : FALSE;
 }
 
@@ -25,9 +25,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpvReserved) {
 	using namespace Hydr10n::ProcessUtils;
 	switch (dwReason) {
 	case DLL_PROCESS_ATTACH: {
+		ProcessProtector::Hide(sharedData.dwHookCallerProcessId);
+		ProcessProtector::Protect(sharedData.dwHookCallerProcessId);
 		hInstance = hModule;
-		ProcessProtector::Hide(sharedData.dwHookCallerProcessID);
-		ProcessProtector::Protect(sharedData.dwHookCallerProcessID);
 	}	break;
 	}
 	return TRUE;

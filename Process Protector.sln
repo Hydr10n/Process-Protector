@@ -11,11 +11,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DetoursHelpers", "DetoursHelpers\DetoursHelpers.vcxitems", "{0491BC94-CB78-42D3-B8CA-3016322B416F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileUtils", "FileUtils\FileUtils.vcxitems", "{C2E0C70E-A40F-4C72-8BF1-B1EBA63626ED}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "std_container_helpers", "std_container_helpers\std_container_helpers.vcxitems", "{192E25ED-926C-4C70-9D6A-700CF60712E6}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		DetoursHelpers\DetoursHelpers.vcxitems*{0491bc94-cb78-42d3-b8ca-3016322b416f}*SharedItemsImports = 9
+		std_container_helpers\std_container_helpers.vcxitems*{192e25ed-926c-4c70-9d6a-700cf60712e6}*SharedItemsImports = 9
 		ProcessUtils\ProcessUtils.vcxitems*{5cc106a1-6209-45f1-b5f5-b0e6696218d0}*SharedItemsImports = 9
+		FileUtils\FileUtils.vcxitems*{c2e0c70e-a40f-4c72-8bf1-b1eba63626ed}*SharedItemsImports = 9
 		ProcessUtils\ProcessUtils.vcxitems*{ee16152f-396e-4cec-8490-4b074c9efa89}*SharedItemsImports = 4
+		FileUtils\FileUtils.vcxitems*{f3f4dcd6-2bc3-4700-b2f9-0020e9e18dda}*SharedItemsImports = 4
+		ProcessUtils\ProcessUtils.vcxitems*{f3f4dcd6-2bc3-4700-b2f9-0020e9e18dda}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

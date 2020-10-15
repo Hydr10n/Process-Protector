@@ -4,15 +4,16 @@
 
 #include <iostream>
 #include <conio.h>
+#include "FileUtils.h"
 #include "../HookLib/HookLib.h"
 
 using namespace std;
 
 int wmain() {
-	WCHAR szModuleFileName[MAX_PATH];
-	GetModuleFileNameW(NULL, szModuleFileName, ARRAYSIZE(szModuleFileName));
+	wstring moduleFileName;
+	Hydr10n::FileUtils::GetModuleFileNameW(moduleFileName);
 	ShellExecuteW(NULL, NULL, L"taskmgr", NULL, NULL, SW_SHOWNORMAL);
-	wcout << "Test: view current process \"" << szModuleFileName << "\" in Task Manager." << endl << endl
+	wcout << "Test: view current process \"" << moduleFileName << "\" in Task Manager." << endl << endl
 		<< "Test ready. Waiting for a key to start..." << endl;
 	(void)_getwch();
 
