@@ -36,7 +36,7 @@ namespace Hydr10n {
 
 			static const struct static_constructor {
 				static_constructor() {
-					using Hydr10n::DetoursHelpers::ChangeProcAddr;
+					using DetoursHelpers::ChangeProcAddr;
 					m_OpenProcess = OpenProcess;
 					m_NtQuerySystemInformation = NtQuerySystemInformation;
 					ChangeProcAddr((PVOID*)&m_OpenProcess, MyOpenProcess, FALSE);
@@ -44,7 +44,7 @@ namespace Hydr10n {
 				}
 
 				~static_constructor() {
-					using Hydr10n::DetoursHelpers::ChangeProcAddr;
+					using DetoursHelpers::ChangeProcAddr;
 					ChangeProcAddr((PVOID*)&m_OpenProcess, MyOpenProcess, TRUE);
 					ChangeProcAddr((PVOID*)&m_NtQuerySystemInformation, MyNtQuerySystemInformation, TRUE);
 				}
