@@ -1,6 +1,6 @@
 /*
  * Heade File: set_helper.h
- * Last Update: 2020/10/15
+ * Last Update: 2020/10/16
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -17,16 +17,12 @@ namespace Hydr10n {
 
 			template <class T1, class T2, class Compare = class std::set<T1>::key_compare, class Allocator = class std::set<T1>::allocator_type>
 			static bool modify(std::set<T1, Compare, Allocator>& container, const T2& item, bool remove) {
-				bool ret = contains(container, item) == remove;
-				if (ret) {
-					try {
-						if (remove)
-							container.erase(item);
-						else
-							container.insert(item);
-					}
-					catch (...) { ret = false; }
-				}
+				const bool ret = contains(container, item) == remove;
+				if (ret)
+					if (remove)
+						container.erase(item);
+					else
+						container.insert(item);
 				return ret;
 			}
 		};

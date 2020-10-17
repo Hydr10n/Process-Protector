@@ -22,7 +22,7 @@ BOOL WINAPI UnhookGlobalWindowsHook() {
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpvReserved) {
-	using namespace Hydr10n::ProcessUtils;
+	using Hydr10n::ProcessUtils::ProcessProtector;
 	switch (dwReason) {
 	case DLL_PROCESS_ATTACH: {
 		ProcessProtector::Hide(sharedData.dwHookCallerProcessId);
